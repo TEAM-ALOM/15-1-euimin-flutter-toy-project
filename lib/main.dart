@@ -4,14 +4,20 @@ import 'package:chat_app/screens/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/home_screen.dart';
 import 'auth/registration_screen.dart';
 import 'screens/chat_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'auth/auth_state_check.dart';
 
-void main() {
+void main() async {
   //초기화
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Firebase 초기화를 main에서 수행
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(const MyApp());
 }
 
@@ -28,19 +34,14 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: FutureBuilder(
-            future: Firebase.initializeApp(
-              options: DefaultFirebaseOptions.currentPlatform,
+          home: AuthStateCheck(),
+          theme: ThemeData(
+            primaryColor: const Color(0xFF6366F1),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF6366F1),
+              primary: const Color(0xFF6366F1),
             ),
-            builder: (context, snapshot) {
-              //Firebase 초기화가 완료되면 HomeScreen으로 이동
-              if (snapshot.connectionState == ConnectionState.done) {
-                return const HomeScreen();
-              } else {
-                //Firebase 초기화가 완료되지 않았으면 CircularProgressIndicator 표시
-                return const Center(child: CircularProgressIndicator());
-              }
-            },
+            useMaterial3: true,
           ),
           routes: {
             '/registration': (context) => RegistrationScreen(),

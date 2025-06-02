@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../themes.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/friend_service.dart';
 import 'chat_screen.dart';
 import 'profile.dart';
@@ -16,6 +17,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   int _selectedIndex = 0;
+  bool _isLoading = false;
 
   // 중복 제거용: 안내 메시지 위젯
   Widget _sectionMessage(String text, {Color? color, double? fontSize}) {
@@ -93,36 +95,125 @@ class _MainScreenState extends State<MainScreen> {
 
   // 중복 제거용: 친구 리스트 카드 위젯
   Widget _friendListCard(Map<String, dynamic> friend) {
+    final friendUid = friend['uid'] ?? '';
+    final friendEmail = friend['email'] ?? '이메일 없음';
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       elevation: 1,
-      child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.person)),
-        title: FutureBuilder<String?>(
-          future: FriendService.getUserName(friend['uid'] ?? ''),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Text(
-                '로딩 중...',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              );
-            }
-            if (snapshot.hasError) {
-              return const Text(
-                '이름 없음',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              );
-            }
-            final name = snapshot.data ?? '이름 없음';
-            return Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            );
-          },
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12.r),
+        splashColor: AppColors.primary.withOpacity(0.1),
+        onTap: () => _startChatWithFriend(friendUid, friendEmail),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: AppColors.primaryDark,
+              child: Icon(Icons.person, color: Colors.white),
+            ),
+            title: FutureBuilder<String?>(
+              future: FriendService.getUserName(friendUid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Text(
+                    '로딩 중...',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return const Text(
+                    '이름 없음',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  );
+                }
+                final name = snapshot.data ?? '이름 없음';
+                return Text(
+                  name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                );
+              },
+            ),
+            subtitle: Text(friendEmail),
+            trailing: Icon(
+              Icons.chat_bubble_outline,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+          ),
         ),
-        subtitle: Text(friend['email'] ?? '이메일 없음'),
       ),
     );
+  }
+
+  // 친구와 채팅 시작 함수
+  Future<void> _startChatWithFriend(
+    String friendUid,
+    String friendEmail,
+  ) async {
+    if (friendUid.isEmpty) return;
+
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      // 1. 두 사용자 사이의 채팅방이 이미 있는지 확인
+      final chatsRef = FirebaseFirestore.instance.collection('chats');
+      final chatQuery =
+          await chatsRef.where('participants', arrayContains: user.uid).get();
+
+      String? existingChatId;
+
+      // 이미 있는 채팅방 확인
+      for (final doc in chatQuery.docs) {
+        final participants = List<String>.from(
+          doc.data()['participants'] ?? [],
+        );
+        if (participants.contains(friendUid)) {
+          existingChatId = doc.id;
+          break;
+        }
+      }
+
+      // 2. 채팅방 이름 가져오기
+      final friendName = await FriendService.getUserName(friendUid) ?? '사용자';
+
+      // 3. 채팅방 없으면 새로 생성
+      if (existingChatId == null) {
+        final newChatRef = await chatsRef.add({
+          'participants': [user.uid, friendUid],
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'unreadCount': 0,
+        });
+        existingChatId = newChatRef.id;
+      }
+
+      // 4. 채팅방으로 이동
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ChatRoomScreen(
+                chatId: existingChatId!,
+                otherUserId: friendUid,
+                otherUserName: friendName,
+              ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('채팅방 생성 오류: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   // 탭 인덱스 변경 핸들러
