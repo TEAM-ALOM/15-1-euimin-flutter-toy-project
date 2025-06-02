@@ -1,9 +1,11 @@
-import 'package:chat_app/screens/login_screen.dart';
+import 'package:chat_app/auth/login_screen.dart';
+import 'package:chat_app/screens/main_screen.dart';
+import 'package:chat_app/screens/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
-import 'screens/registration_screen.dart';
+import 'auth/registration_screen.dart';
 import 'screens/chat_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -44,6 +46,8 @@ class MyApp extends StatelessWidget {
             '/registration': (context) => RegistrationScreen(),
             '/login': (context) => LoginScreen(),
             '/chat': (context) => ChatScreen(),
+            '/main': (context) => MainScreen(),
+            '/mypage': (context) => Profile(),
           },
         );
       },

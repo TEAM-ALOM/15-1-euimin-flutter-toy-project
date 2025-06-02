@@ -1,55 +1,35 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../themes.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<RegistrationScreen> createState() => _RegistrationScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
-
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmController = TextEditingController();
-
+  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String? _errorMessage;
 
-  // 회원가입 처리 함수
-  Future<void> _register() async {
+  Future<void> _login() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      if (_passwordController.text != _confirmController.text) {
-        setState(() {
-          _errorMessage = '비밀번호가 일치하지 않습니다.';
-          _isLoading = false;
-        });
-        return;
-      }
-      // Firebase Auth 회원가입
-      final userCredential = await _auth.createUserWithEmailAndPassword(
+      await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // Firestore에 사용자 정보 저장 (예시)
-      await _firestore.collection('users').doc(userCredential.user!.uid).set({
-        'email': _emailController.text.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      // 회원가입 성공 시 로그인 화면으로 이동
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.of(context).pushReplacementNamed('/main');
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = e.message;
@@ -69,7 +49,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmController.dispose();
     super.dispose();
   }
 
@@ -79,13 +58,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: Text('회원가입', style: TextStyle(color: Colors.white, fontSize: 18.sp)),
+        title: Text(
+          '로그인',
+          style: TextStyle(color: Colors.white, fontSize: 18.sp),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: Center(
         child: SingleChildScrollView(
-          // ScreenUtil을 활용한 반응형 padding
           padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 24.h),
           child: Form(
             key: _formKey,
@@ -93,6 +74,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 이메일 입력
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
@@ -115,8 +97,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     return null;
                   },
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16.h),
+                // 비밀번호 입력
                 TextFormField(
                   controller: _passwordController,
                   decoration: InputDecoration(
@@ -139,30 +123,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     }
                     return null;
                   },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmController,
-                  decoration: InputDecoration(
-                    labelText: '비밀번호 확인',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                  ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '비밀번호 확인을 입력하세요.';
-                    }
-                    if (value != _passwordController.text) {
-                      return '비밀번호가 일치하지 않습니다.';
-                    }
-                    return null;
-                  },
+                  textInputAction: TextInputAction.done,
                 ),
                 SizedBox(height: 24.h),
                 if (_errorMessage != null)
@@ -178,7 +139,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                   ),
                 SizedBox(
-                  height: 48.h, // 버튼 높이도 반응형
+                  height: 48.h,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -192,25 +153,53 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ? null
                             : () {
                               if (_formKey.currentState!.validate()) {
-                                _register();
+                                _login();
                               }
                             },
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 24.w,
-                            height: 24.w,
-                            child: const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Text(
-                              '회원가입',
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              width: 24.w,
+                              height: 24.w,
+                              child: const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                            : Text(
+                              '로그인',
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                // 회원가입 이동 버튼
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
+                    minimumSize: Size.fromHeight(48.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, '/registration');
+                  },
+                  child: Text(
+                    '회원가입 하러가기',
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

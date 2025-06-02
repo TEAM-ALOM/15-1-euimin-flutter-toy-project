@@ -40,15 +40,6 @@ class HomeScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 12.h),
-              Text(
-                '아래 버튼으로 이동해 다양한 기능을 체험해보세요.',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14.sp,
-                ),
-                textAlign: TextAlign.center,
-              ),
               SizedBox(height: 40.h),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -91,28 +82,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary, width: 1.5),
-                  minimumSize: Size.fromHeight(48.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/chat');
-                },
-                child: Text(
-                  '채팅방 바로가기',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),
