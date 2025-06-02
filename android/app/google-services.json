@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1042367058729",
+    "project_id": "chat-app-1ea85",
+    "storage_bucket": "chat-app-1ea85.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042367058729:android:01a0e7d4115dc53f2a1d38",
+        "android_client_info": {
+          "package_name": "com.elipair.chatApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCN2NweOIk057K1p5JmwSlP0s2G37ULTbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
