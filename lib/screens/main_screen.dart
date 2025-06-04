@@ -130,19 +130,23 @@ class _MainScreenState extends State<MainScreen> {
             },
           ),
           subtitle: Text(friendEmail),
-          trailing: Icon(
-            Icons.chat_bubble_outline,
-            color: AppColors.primary,
-            size: 20.sp,
+          trailing: IconButton(
+            icon: Icon(
+              Icons.chat_bubble_outline,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ChatScreen(friendUid: friendUid),
+                ),
+              );
+            },
           ),
           // 친구 카드 탭했을 때 1:1 채팅방으로 이동
           onTap: () {
-            // 채팅 화면으로 이동 (친구 UID 전달)
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ChatScreen(friendUid: friendUid),
-              ),
-            );
+            //나중에 친구 프로필 같은거 확인하게
           },
         ),
       ),
