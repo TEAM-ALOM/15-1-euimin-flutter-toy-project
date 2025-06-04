@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/friend_service.dart';
 import 'chat_screen.dart';
 import 'profile.dart';
+import 'chat_room_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -134,6 +135,15 @@ class _MainScreenState extends State<MainScreen> {
             color: AppColors.primary,
             size: 20.sp,
           ),
+          // 친구 카드 탭했을 때 1:1 채팅방으로 이동
+          onTap: () {
+            // 채팅 화면으로 이동 (친구 UID 전달)
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(friendUid: friendUid),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -167,7 +177,7 @@ class _MainScreenState extends State<MainScreen> {
     // 탭별 화면 리스트
     final List<Widget> pages = [
       _buildHomeTab(user),
-      const ChatScreen(),
+      const ChatRoomListScreen(),
       const Profile(),
     ];
 
